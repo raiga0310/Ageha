@@ -35,7 +35,7 @@ async fn sendToDiscord(overview: WeatherOverview) -> Result<()>{
 
     let local_datetime: DateTime<Local> = Local::now();
     let client = Client::new();
-    let dis_url = "https://discord.com/api/webhooks/956394769456697375/Y-mKJww-TDrVARxJbaUBn_93fozuJiXJZ3tePm7_R7LNGCg9EowB70D3U3jsZKs_r2u3";
+    let dis_url = "your webhook url";
     let overview = overview.text;
     let embed_text = serde_json::json!({
         "username": "Ageha",
