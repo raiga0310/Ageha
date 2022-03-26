@@ -1,4 +1,3 @@
-use std::env;
 use axum::{routing::get, Router};
 use axum::response::IntoResponse;
 use reqwest::{Client, StatusCode};
@@ -8,8 +7,6 @@ use std::env::var;
 use anyhow::Result;
 use serde::Deserialize;
 use serde_json;
-
-// ENV Area, webhook
 
 #[derive(Debug, Deserialize)]
 struct WeatherOverview {
@@ -21,7 +18,9 @@ struct WeatherOverview {
 }
 
 async fn getOverview() -> Result<WeatherOverview> {
+
     let area = "AREA";
+
     let client = Client::new();
     let jma_url = env::var(area)?;
 
@@ -40,6 +39,7 @@ async fn sendToDiscord(overview: WeatherOverview) -> Result<()>{
     let local_datetime: DateTime<Local> = Local::now();
     let client = Client::new();
     let dis_url = env::var(webhook)?;
+
     let overview = overview.text;
     let embed_text = serde_json::json!({
         "username": "Ageha",
