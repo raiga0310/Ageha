@@ -3,6 +3,7 @@ use axum::response::IntoResponse;
 use reqwest::{Client, StatusCode};
 use chrono::{DateTime, Local};
 use std::net::SocketAddr;
+use std::env::var;
 use anyhow::Result;
 use serde::Deserialize;
 use serde_json;
@@ -18,8 +19,10 @@ struct WeatherOverview {
 
 async fn getOverview() -> Result<WeatherOverview> {
 
+    let area = "AREA";
+
     let client = Client::new();
-    let jma_url = "https://www.jma.go.jp/bosai/forecast/data/overview_forecast/230000.json";
+    let jma_url = env::var(area)?;
 
     let response= client
         .get(jma_url)
@@ -32,10 +35,11 @@ async fn getOverview() -> Result<WeatherOverview> {
 }
 
 async fn sendToDiscord(overview: WeatherOverview) -> Result<()>{
-
+    let webhook = "WEBHOOK";
     let local_datetime: DateTime<Local> = Local::now();
     let client = Client::new();
-    let dis_url = "your webhook url";
+    let dis_url = env::var(webhook)?;
+
     let overview = overview.text;
     let embed_text = serde_json::json!({
         "username": "Ageha",
