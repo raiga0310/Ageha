@@ -1,7 +1,7 @@
 mod weather;
 
-use reqwest::Error;
 use dotenv::dotenv;
+use reqwest::Error;
 use weather::ApiResponse;
 
 #[tokio::main]
@@ -12,12 +12,9 @@ async fn main() -> Result<(), Error> {
     let base_url = "https://www.jma.go.jp/bosai/forecast/data/forecast/";
     let request_url = format!("{}{}.json", base_url, geocode);
     println!("Request URL: {}", request_url);
-    
+
     // Send request and get the response text
-    let response_text = reqwest::get(request_url)
-        .await?
-        .text()
-        .await?;
+    let response_text = reqwest::get(request_url).await?.text().await?;
 
     // Deserialize the response text to ApiResponse using match
     let api_response: ApiResponse = match serde_json::from_str(&response_text) {
@@ -33,5 +30,4 @@ async fn main() -> Result<(), Error> {
     println!("Weather information:\n{}", report);
 
     Ok(())
-
 }
