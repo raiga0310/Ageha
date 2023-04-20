@@ -27,7 +27,9 @@ async fn main() -> Result<(), Error> {
 
     let report = api_response[0].clone();
 
-    println!("Weather information:\n{}", report);
+    //println!("Weather information:\n{}", report);
+    println!("----------------------------------------");
+    println!("{:?}", report.display_weather_and_temperature());
 
     Ok(())
 }

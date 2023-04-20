@@ -1,5 +1,6 @@
 use serde::Deserialize;
 use std::fmt::{self, Display};
+use chrono::{DateTime, FixedOffset, TimeZone, Datelike};
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct WeatherReport {
@@ -7,6 +8,104 @@ pub struct WeatherReport {
     pub reportDatetime: String,
     pub timeSeries: Vec<TimeSeries>,
 }
+
+#[derive(Debug, Clone)]
+pub struct TimeSpecificData {
+    pub time: DateTime<FixedOffset>,
+    pub area_name: String,
+    pub weathers: Vec<String>,
+    pub temps: Vec<String>,
+}
+
+impl WeatherReport {
+    // 曜日を返すプライベートメソッド（モック実装）
+    fn _day_of_week(&self, date: DateTime<FixedOffset>) -> &'static str {
+        match date.weekday() {
+            chrono::Weekday::Mon => "Mon",
+            chrono::Weekday::Tue => "Tue",
+            chrono::Weekday::Wed => "Wed",
+            chrono::Weekday::Thu => "Thu",
+            chrono::Weekday::Fri => "Fri",
+            chrono::Weekday::Sat => "Sat",
+            chrono::Weekday::Sun => "Sun",
+        }
+    }
+
+    pub fn display_weather_and_temperature(&self) {
+        println!("Time-specific Weather:");
+        self.display_time_specific_data("weather");
+
+        println!("\nTime-specific Temperature:");
+        self.display_time_specific_data("temperature");
+    }
+
+    fn display_time_specific_data(&self, data_type: &str) {
+        let data = self.extract_time_specific_data();
+        match data_type {
+            "weather" => {
+                let content = data
+                    .iter()
+                    .filter(|area| !area.weathers.is_empty())
+                    .map(|area| {
+                        format!(
+                            "| {:<15} | {:<12} | {:<15} |",
+                            area.time.format("%m/%d %H:%M %a"),
+                            area.area_name,
+                            area.weathers.join(" / ")
+                        )
+                    })
+                    .collect::<Vec<String>>()
+                    .join("\n");
+
+                if !content.is_empty() {
+                    let header = "| Time            | Area         | Weather         |\n| --------------- | ------------ | --------------- |";
+                    println!("{}\n{}", header, content);
+                }
+            }
+            "temperature" => {
+                let content = data
+                    .iter()
+                    .filter(|area| !area.temps.is_empty())
+                    .map(|area| {
+                        format!(
+                            "| {:<15} | {:<12} | {:<16} |",
+                            area.time.format("%m/%d %H:%M %a"),
+                            area.area_name,
+                            area.temps.join(" / ")
+                        )
+                    })
+                    .collect::<Vec<String>>()
+                    .join("\n");
+
+                if !content.is_empty() {
+                    let header = "| Time            | Area         | Temperature (℃) |\n| --------------- | ------------ | ---------------- |";
+                    println!("{}\n{}", header, content);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn extract_time_specific_data(&self) -> Vec<TimeSpecificData> {
+        let mut data = Vec::new();
+        for time_series in &self.timeSeries {
+            let time = time_series.timeDefines[0].parse::<DateTime<FixedOffset>>().unwrap();
+            for area in &time_series.areas {
+                let area_name = area.area.name.clone();
+                let weathers = area.weathers.clone();
+                let temps = area.temps.clone();
+                data.push(TimeSpecificData {
+                    time,
+                    area_name,
+                    weathers,
+                    temps,
+                });
+            }
+        }
+        data
+    }    
+}
+
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct TimeSeries {
