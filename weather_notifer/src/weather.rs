@@ -1,7 +1,7 @@
+use chrono::{DateTime, Datelike, FixedOffset};
 use serde::Deserialize;
 use std::fmt::{self, Display};
-use chrono::{DateTime, FixedOffset, TimeZone, Datelike};
-
+#[allow(non_snake_case)]
 #[derive(Debug, Deserialize, Clone)]
 pub struct WeatherReport {
     pub publishingOffice: String,
@@ -31,16 +31,19 @@ impl WeatherReport {
         }
     }
 
-    pub fn display_weather_and_temperature(&self) {
-        println!("Time-specific Weather:");
-        self.display_time_specific_data("weather");
+    pub fn display_weather_and_temperature(&self) -> String {
+        let mut output = String::new();
+        output.push_str("Time-specific Weather:\n");
+        output.push_str(self.display_time_specific_data("weather").as_str());
 
-        println!("\nTime-specific Temperature:");
-        self.display_time_specific_data("temperature");
+        output.push_str("\nTime-specific Temperature:\n");
+        output.push_str(self.display_time_specific_data("temperature").as_str());
+        output
     }
 
-    fn display_time_specific_data(&self, data_type: &str) {
+    fn display_time_specific_data(&self, data_type: &str) -> String {
         let data = self.extract_time_specific_data();
+        let mut output = String::new();
         match data_type {
             "weather" => {
                 let content = data
@@ -59,7 +62,9 @@ impl WeatherReport {
 
                 if !content.is_empty() {
                     let header = "| Time            | Area         | Weather         |\n| --------------- | ------------ | --------------- |";
-                    println!("{}\n{}", header, content);
+                    output.push_str(header);
+                    output.push_str("\n");
+                    output.push_str(content.as_str());
                 }
             }
             "temperature" => {
@@ -79,18 +84,25 @@ impl WeatherReport {
 
                 if !content.is_empty() {
                     let header = "| Time            | Area         | Temperature (℃) |\n| --------------- | ------------ | ---------------- |";
-                    println!("{}\n{}", header, content);
+                    output.push_str(header);
+                    output.push_str("\n");
+                    output.push_str(content.as_str());
                 }
             }
             _ => {}
         }
+        output.push_str("\n");
+        output
     }
 
     fn extract_time_specific_data(&self) -> Vec<TimeSpecificData> {
         let mut data = Vec::new();
-        for time_series in &self.timeSeries {
-            let time = time_series.timeDefines[0].parse::<DateTime<FixedOffset>>().unwrap();
-            for area in &time_series.areas {
+        #[allow(non_snake_case)]
+        for timeSeries in &self.timeSeries {
+            let time = timeSeries.time_defines[0]
+                .parse::<DateTime<FixedOffset>>()
+                .unwrap();
+            for area in &timeSeries.areas {
                 let area_name = area.area.name.clone();
                 let weathers = area.weathers.clone();
                 let temps = area.temps.clone();
@@ -103,14 +115,13 @@ impl WeatherReport {
             }
         }
         data
-    }    
+    }
 }
-
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct TimeSeries {
     #[serde(rename = "timeDefines")]
-    pub timeDefines: Vec<String>,
+    pub time_defines: Vec<String>,
     pub areas: Vec<Area>,
 }
 
@@ -118,7 +129,7 @@ pub struct TimeSeries {
 pub struct Area {
     pub area: AreaDetail,
     #[serde(default)]
-    pub weatherCodes: Vec<String>,
+    pub weather_codes: Vec<String>,
     #[serde(default)]
     pub weathers: Vec<String>,
     #[serde(default)]
@@ -142,16 +153,16 @@ impl Display for WeatherReport {
         writeln!(f, "Publishing Office: {}", self.publishingOffice)?;
         writeln!(f, "Report Datetime: {}", self.reportDatetime)?;
         writeln!(f, "Time Series:")?;
-        for (i, time_series) in self.timeSeries.iter().enumerate() {
+        for (i, timeSeries) in self.timeSeries.iter().enumerate() {
             writeln!(f, "  [{}] Time Defines:", i)?;
-            for time_define in &time_series.timeDefines {
+            for time_define in &timeSeries.time_defines {
                 writeln!(f, "    {}", time_define)?;
             }
             writeln!(f, "  [{}] Areas:", i)?;
-            for area in &time_series.areas {
+            for area in &timeSeries.areas {
                 writeln!(f, "    Area: {} ({})", area.area.name, area.area.code)?;
-                if !area.weatherCodes.is_empty() {
-                    writeln!(f, "    Weather Codes: {:?}", area.weatherCodes)?;
+                if !area.weather_codes.is_empty() {
+                    writeln!(f, "    Weather Codes: {:?}", area.weather_codes)?;
                 }
                 if !area.weathers.is_empty() {
                     let sanitized_weathers: Vec<String> = area
